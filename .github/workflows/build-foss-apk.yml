@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build FOSS Debug APK
+    name: Build FOSS Release APK
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout source code
@@ -17,13 +17,27 @@ jobs:
       - name: Setup project and build environment
         uses: ./.github/actions/common-setup
 
-      - name: Build FOSS Debug APK
-        run: ./gradlew assembleFossDebug
+      - name: Create keystore directory and decode
+        env:
+          ENCODED_KEYSTORE: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+        run: |
+          echo "$ENCODED_KEYSTORE" | base64 -d > "$KEYSTORE_PATH"
+          echo "Keystore file created at: $KEYSTORE_PATH"
+          ls -lh "$KEYSTORE_PATH"
+
+      - name: Build FOSS Release APK
+        run: ./gradlew assembleFossRelease
+        env:
+          STORE_PATH: ${{ runner.temp }}/release.jks
+          STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2.2.1
         with:
-          files: app/build/outputs/apk/foss/debug/*.apk
+          files: app/build/outputs/apk/foss/release/*.apk
           tag_name: build-${{ github.run_number }}
           draft: false
           prerelease: true
@@ -34,5 +48,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: foss-apk
-          path: app/build/outputs/apk/foss/debug/*.apk
+          path: app/build/outputs/apk/foss/release/*.apk
           retention-days: 30
