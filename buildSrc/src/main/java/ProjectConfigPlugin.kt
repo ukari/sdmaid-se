@@ -5,7 +5,7 @@ import java.io.FileInputStream
 import java.util.Properties
 
 open class ProjectConfig {
-    val packageName = "eu.darken.sdmse"
+    val packageName = "io.github.ukari.sdmse"
     val minSdk = 26
 
     val compileSdk = 35
